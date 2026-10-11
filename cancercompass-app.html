@@ -4,6 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>OncoEase — Your Cancer Support Companion</title>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="theme-color" content="#0B7A3E"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="OncoEase"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 <style>
   :root{--green:#0B7A3E;--dark:#063F22;--tint:#EAF6EE;--ink:#0E2417;--muted:#3C5546;--line:#CFE6D6;--coral:#C64A2E;--gold:#8a6d1b}
@@ -82,6 +90,12 @@
         <h3 id="expTitle" style="margin:6px 0"></h3><div id="expBody"></div>
         <button type="button" class="btn b-green" data-act="exp-done">Done →</button>
         <button type="button" class="btn b-white" data-act="exp-back">← Back</button>
+      </div>
+      <div class="card" id="installCard"><span class="tag">Use offline anytime</span>
+        <b>📲 Install OncoEase on this phone</b>
+        <p class="muted">One tap adds the app icon to your home screen — then it opens fast and works without internet in hospital wards.</p>
+        <button type="button" class="btn b-green" data-act="install">Install now →</button>
+        <p class="muted hidden" id="iosHelp">On iPhone: tap <b>Share ⬆</b> in Safari → <b>Add to Home Screen</b> → Add.</p>
       </div>
       <div class="card hidden" id="outCard"><span class="tag">Check out</span>
         <b>How do you feel now?</b><div class="chips" id="postEmo"></div>
@@ -179,7 +193,7 @@
     <button type="button" data-act="tab" data-to="learn"><span>📚</span>Learn</button>
     <button type="button" data-act="tab" data-to="support"><span>❤️</span>Support</button>
   </nav>
-  <div class="foot">OncoEase • Med Crescent Pharmacy • v2.0<br><span id="acctLine"></span><br><button type="button" data-act="export">Download my records</button> • <button type="button" data-act="logout">Log out</button></div>
+  <div class="foot">OncoEase • Med Crescent Pharmacy • v2.1<br><span id="acctLine"></span><br><button type="button" data-act="install" id="installBtn">📲 Install OncoEase on this phone</button><br><button type="button" data-act="export">Download my records</button> • <button type="button" data-act="logout">Log out</button></div>
 </div>
 
 <div id="sess" class="sess hidden"><div class="sess-box">
@@ -340,6 +354,7 @@ document.addEventListener("click",function(e){
   if(act==="chat-send"){chatSend();return}
   if(act==="pay"){payNow();return}
   if(act==="export"){exportCSV();return}
+  if(act==="install"){doInstall();return}
   if(act==="logout"){save("oe_session",null);sessionUser=null;$("authModal").classList.remove("hidden");paintAcct();return}
   if(act==="auth-login"){authDo(false);return}
   if(act==="auth-signup"){authDo(true);return}
@@ -389,6 +404,16 @@ function authDo(isSignup){var u=$("aUser").value.trim().toLowerCase(),p=$("aPass
       if(U[u].h!==h){msg.textContent="Wrong password — please try again.";return}
       sessionUser={name:u,role:U[u].role};save("oe_session",sessionUser);save("cc_profile",U[u].role);profile=U[u].role;$("authModal").classList.add("hidden");paintAcct();showTab("home")}}
   )}
+/* PWA: service worker (offline) + install prompt */
+if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+var _deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();_deferredPrompt=e;var b=$("installBtn");if(b)b.textContent="📲 Install OncoEase on this phone"});
+window.addEventListener("appinstalled",function(){save("oe_installed",{at:Date.now()});var b=$("installBtn");if(b)b.textContent="✅ OncoEase installed";var c=$("installCard");if(c)c.classList.add("hidden")});
+if(load("oe_installed")){var _ib=$("installBtn");if(_ib)_ib.textContent="✅ OncoEase installed"}
+function doInstall(){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent||"")&&!window.MSStream;
+  if(_deferredPrompt){_deferredPrompt.prompt();_deferredPrompt.userChoice.then(function(){_deferredPrompt=null})}
+  else if(ios){var h=$("iosHelp");if(h)h.classList.remove("hidden");alert("On iPhone: tap Share ⬆ in Safari, then Add to Home Screen.")}
+  else alert("To install: open your browser menu (⋮) and tap Install app / Add to Home screen.")}
 $("chatIn").addEventListener("keydown",function(e){if(e.key==="Enter")chatSend()});
 document.addEventListener("visibilitychange",function(){if(document.hidden&&Sess.playing)Sess.toggle()});
 /* init */
