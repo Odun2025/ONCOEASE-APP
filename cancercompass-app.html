@@ -60,7 +60,7 @@
 <body>
 <div class="phone">
   <div class="hero">
-    <div class="brand">💚 OncoEase <span class="pill" id="modePill">Home</span></div>
+    <div class="brand">OncoEase <span class="pill" id="modePill">Home</span></div>
     <h1 id="title">How are you feeling today?</h1>
     <p>General information only — never a replacement for your care team.</p>
     <div class="row" style="margin-top:12px">
@@ -214,10 +214,11 @@
 
 <div id="authModal" class="modal"><div class="mbox">
   <h2 style="margin-top:0">💚 Welcome to OncoEase</h2>
-  <p class="muted">Your companion through treatment and recovery. Sign in to begin — your account lives on this phone.</p>
+  <p class="muted">Your companion through treatment and recovery. Sign in to begin.</p>
   <div class="row"><button type="button" class="chip on" id="aPatient" style="flex:1">🧍 I'm a patient</button><button type="button" class="chip" id="aCare" style="flex:1">👪 I'm a caregiver</button></div>
-  <label class="muted">Username</label><input id="aUser" placeholder="Choose a username" autocomplete="username"/>
-  <label class="muted">Password</label><input id="aPass" type="password" placeholder="Choose a password" autocomplete="new-password"/>
+  <label class="muted">Username</label><input id="aUser" placeholder="Enter your username" autocomplete="username"/>
+  <label class="muted">Password</label>
+  <div style="position:relative"><input id="aPass" type="password" placeholder="Enter your password" autocomplete="current-password" style="padding-right:52px"/><button type="button" id="pwEye" aria-label="Show password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:20px;cursor:pointer">👁️</button></div>
   <label class="muted"><input type="checkbox" id="aConsent" style="width:22px"/> I understand OncoEase gives general information only and never replaces my care team.</label>
   <button type="button" class="btn b-green" data-act="auth-login">Log in →</button>
   <button type="button" class="btn b-white" data-act="auth-signup">Create my account</button>
@@ -270,10 +271,11 @@ function refreshAll(){
   paintMeds();paintAdh();paintJourneyLine();paintAcct();sugFav();
   if(state.treatment)$("treatBtn").textContent="💊 Treatment: ON";
 }
-function paintAcct(){var n=sessionUser?sessionUser.name:"";var r=sessionUser?sessionUser.role:"";$("acctLine").textContent=n?("Signed in as "+n+" ("+r+") on this phone"):"";
+function paintAcct(){var s=load("oe_session");var n=s?s.name:"";var r=s?s.role:"";$("acctLine").textContent=n?("Signed in as "+n+" ("+r+")"):"";
+  if(n){var au=$("aUser");if(au&&!au.value)au.value=n}
   var cg=$("caregiverCard");if(cg)cg.classList.toggle("hidden",!(sessionUser&&sessionUser.role==="caregiver"))}
 function sugFav(){var f=load("oe_fav")||{},el=$("favSug");if(!el)return;var names={coast:"Nigerian coast",garden:"garden",sunset:"evening light",fantasy:"grove"};
-  if(f.world){el.classList.remove("hidden");el.innerHTML="";var s=document.createElement("span");s.innerHTML="💚 You usually choose <b>"+esc(names[f.world]||f.world)+"</b>. ";var b=document.createElement("button");b.type="button";b.className="chip";b.textContent="Revisit →";b.setAttribute("data-act","world");b.setAttribute("data-w",f.world);el.appendChild(s);el.appendChild(b)}else el.classList.add("hidden")}
+  if(f.world){el.classList.remove("hidden");el.innerHTML="";var s=document.createElement("span");s.innerHTML="You usually choose <b>"+esc(names[f.world]||f.world)+"</b>. ";var b=document.createElement("button");b.type="button";b.className="chip";b.textContent="Revisit →";b.setAttribute("data-act","world");b.setAttribute("data-w",f.world);el.appendChild(s);el.appendChild(b)}else el.classList.add("hidden")}
 function showTab(t){["home","explore","treatment","care","learn","support"].forEach(function(x){var s=$("tab-"+x);if(s)s.classList.toggle("hidden",x!==t)});document.querySelectorAll("[data-act='tab']").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-to")===t)});var names={home:"Home",explore:"Explore",treatment:"Treatment",care:"My Care",learn:"Learn",support:"Support"};$("modePill").textContent=names[t]||t;window.scrollTo(0,0)}
 function openExp(n,fromTreat){state.need=n;$("expCard").classList.remove("hidden");$("outCard").classList.add("hidden");showTab("home");
   var titles={relax:"A moment to relax",distract:"A gentle distraction",encourage:"Words for you"};$("expTitle").textContent=(titles[n]||"Your experience")+((state.treatment||fromTreat)?" • during treatment":"");
@@ -391,6 +393,8 @@ function payNow(){var amt=parseInt(($("payAmt").value||"0")),email=$("payEmail")
 function exportCSV(){var rows=[["type","detail","date"]];["oe_checkin","oe_post","oe_fb","oe_world_done","oe_after","oe_journey","oe_relax","oe_meds","oe_adh","oe_symp","oe_miles"].forEach(function(k){var v=load(k);if(v)rows.push([k,JSON.stringify(v).slice(0,300),new Date().toISOString()])});
   var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(",")}).join("\n");var b=new Blob([csv],{type:"text/csv"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="oncoease-my-records.csv";a.click();save("oe_export",{at:Date.now()})}
 var _arole="patient";
+(function(){var lu=load("oe_last_user");if(lu&&lu.u){var au=$("aUser");if(au)au.value=lu.u}})();
+$("pwEye").onclick=function(){var p=$("aPass"),show=p.type==="password";p.type=show?"text":"password";$("pwEye").textContent=show?"🙈":"👁️";$("pwEye").setAttribute("aria-label",show?"Hide password":"Show password")};
 $("aPatient").onclick=function(){_arole="patient";$("aPatient").classList.add("on");$("aCare").classList.remove("on")};
 $("aCare").onclick=function(){_arole="caregiver";$("aCare").classList.add("on");$("aPatient").classList.remove("on")};
 function authDo(isSignup){var u=$("aUser").value.trim().toLowerCase(),p=$("aPass").value,msg=$("authMsg");
@@ -399,10 +403,10 @@ function authDo(isSignup){var u=$("aUser").value.trim().toLowerCase(),p=$("aPass
   var U=users();
   hashPw(p,u).then(function(h){
     if(isSignup){if(U[u]){msg.textContent="That username is taken on this phone — try another, or log in.";return}
-      U[u]={h:h,role:_arole,at:Date.now()};setUsers(U);sessionUser={name:u,role:_arole};save("oe_session",sessionUser);save("cc_profile",_arole);profile=_arole;$("authModal").classList.add("hidden");paintAcct();showTab("home")}
+      U[u]={h:h,role:_arole,at:Date.now()};setUsers(U);sessionUser={name:u,role:_arole};save("oe_session",sessionUser);save("oe_last_user",{u:u});save("cc_profile",_arole);profile=_arole;$("authModal").classList.add("hidden");paintAcct();showTab("home")}
     else{if(!U[u]){msg.textContent="No account with that username on this phone — please create one.";return}
       if(U[u].h!==h){msg.textContent="Wrong password — please try again.";return}
-      sessionUser={name:u,role:U[u].role};save("oe_session",sessionUser);save("cc_profile",U[u].role);profile=U[u].role;$("authModal").classList.add("hidden");paintAcct();showTab("home")}}
+      sessionUser={name:u,role:U[u].role};save("oe_session",sessionUser);save("oe_last_user",{u:u});save("cc_profile",U[u].role);profile=U[u].role;$("authModal").classList.add("hidden");paintAcct();showTab("home")}}
   )}
 /* PWA: service worker (offline) + install prompt */
 if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
